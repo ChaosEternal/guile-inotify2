@@ -1,0 +1,4 @@
+* guile-inotify2
+totally written using ffi.
+
+see test-new.scm for example.
