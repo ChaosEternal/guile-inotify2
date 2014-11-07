@@ -107,9 +107,11 @@
 	 (mask (list-ref parsed 1))
 	 (cookie (list-ref parsed 2))
 	 (len (list-ref parsed 3))
-	 (name (pointer->string 
-		   (bytevector->pointer
-		    (get-bytevector-n port len)))))
+	 (name (if (> len 0)
+		   (pointer->string 
+		    (bytevector->pointer
+		     (get-bytevector-n port len)))
+		   "")))
     
     (list 
      (list 'wd wd)
