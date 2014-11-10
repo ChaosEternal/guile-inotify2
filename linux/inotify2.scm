@@ -2,6 +2,7 @@
 (define-module (linux inotify2)
   #:use-module (system foreign)
   #:use-module (ice-9 binary-ports)
+  #:use-module (rnrs bytevectors)
   #:export (inotify-init 
 	    inotify-add-watch
 	    inotify-rm-watch
@@ -99,8 +100,15 @@
 		 (logtest (cadr x) flag))
 	       inotify-flags)))
 
+
 (define (inotify-read-port port)
-  (let* ((bv (get-bytevector-n port size-struct-inotify-event))
+  (define (read-bv-and-check-length port length)
+    (let* ([bv (make-bytevector length)]
+	   [nread (get-bytevector-n! port bv 0 length)])
+      (if (or (eof-object? nread)) (< nread length)
+	  (scm-error 'read-error "inotify-read-port" "not reading enough bytes" #f '()) 
+	  bv)))
+  (let* ((bv (read-bv-and-check-length port size-struct-inotify-event))
 	 (parsed (parse-c-struct (bytevector->pointer bv)
 				 struct-inotify-event))
 	 (wd (list-ref parsed 0))
@@ -110,7 +118,7 @@
 	 (name (if (> len 0)
 		   (pointer->string 
 		    (bytevector->pointer
-		     (get-bytevector-n port len)))
+		     (read-bv-and-check-length port len)))
 		   "")))
     
     (list 
